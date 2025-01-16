@@ -14,7 +14,7 @@ public class ProfileImg {
 	
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
+	private String id;
 	private String user_id;
 	private String file_name;
 	private String file_type;
@@ -26,7 +26,7 @@ public class ProfileImg {
 	public ProfileImg() {
 		super();
 	}
-	public ProfileImg(int id, String user_id, String file_name, String file_type, String file_size, byte[] grp_data,
+	public ProfileImg(String id, String user_id, String file_name, String file_type, String file_size, byte[] grp_data,
 			LocalDateTime created_at, LocalDateTime updated_at) {
 		super();
 		this.id = id;
@@ -38,10 +38,10 @@ public class ProfileImg {
 		this.created_at = created_at;
 		this.updated_at = updated_at;
 	}
-	public int getId() {
+	public String getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 	public String getUser_id() {

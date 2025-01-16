@@ -22,16 +22,15 @@ public class ProfileImgController {
     @Autowired
     private ProfileImgService profileImgService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file, 
-                                                           @RequestParam("user_id") String userId) {
-        ProfileImg profileImg = profileImgService.uploadProfileImg(file, userId);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("profileId", profileImg.getId()); 
-        
-        return ResponseEntity.ok(response);
-    }
+//    @PostMapping("/upload")
+//    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file, 
+//                                                           @RequestParam("user_id") String userId) {
+//        String response = profileImgService.uploadProfileImg(file, userId);
+//        	
+//         System.err.println(response);
+//        
+//        return ResponseEntity.ok(response);
+//    }
 
 
 
@@ -61,8 +60,8 @@ public class ProfileImgController {
     public ResponseEntity<String> updateFile(@PathVariable String id, 
                                              @RequestParam("file") MultipartFile file, 
                                              @RequestParam("user_id") String userId) {
-        ProfileImg profileImg = profileImgService.updateProfileImg(file, userId);
-        return ResponseEntity.ok("File updated successfully: " + profileImg.getFile_name());
+        String profileImg = profileImgService.updateProfileImg(file, userId);
+        return ResponseEntity.ok("File updated successfully: " + profileImg);
     }
 
     @DeleteMapping("/delete/{id}")

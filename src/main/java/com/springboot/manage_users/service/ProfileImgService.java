@@ -32,37 +32,33 @@ public class ProfileImgService {
         }
     }
 
-    // Method to upload and store a profile image
-    public ProfileImg uploadProfileImg(MultipartFile file, String userId) {
-        String fileId = UUID.randomUUID().toString();
+    public String uploadProfileImg(MultipartFile file, String userId) {
         String fileName = file.getOriginalFilename();
         String fileType = file.getContentType();
         long fileSize = file.getSize();
 
         try {
             ProfileImg profileImg = new ProfileImg();
-            profileImg.setUser_id(userId);
+            profileImg.setUser_id(userId); 
             profileImg.setFile_name(fileName);
             profileImg.setFile_type(fileType);
             profileImg.setFile_size(String.valueOf(fileSize));
-            profileImg.setGrp_data(file.getBytes()); // Store binary data
+            profileImg.setGrp_data(file.getBytes()); 
             profileImg.setCreated_at(LocalDateTime.now());
             profileImg.setUpdated_at(LocalDateTime.now());
 
-            profileImgRepository.save(profileImg);
-
-            return profileImg;
-
+            ProfileImg savedProfileImg = profileImgRepository.save(profileImg);
+            return savedProfileImg.getId();
         } catch (IOException ex) {
-            throw new RuntimeException("Could not store the file " + fileName + ". Please try again!", ex);
+            throw new RuntimeException("Could not store the file " + file.getOriginalFilename() + ". Please try again!", ex);
         }
     }
 
     public Optional<ProfileImg> getProfileImg(String id) {
-        return profileImgRepository.findById(id);
+        return profileImgRepository.findByUserId(id);
     }
 
-    public ProfileImg updateProfileImg(MultipartFile file, String userId) {
+    public String updateProfileImg(MultipartFile file, String userId) {
         Optional<ProfileImg> existingProfileImgOpt = profileImgRepository.findByUserId(userId);
         String fileName = file.getOriginalFilename();
         String fileType = file.getContentType();
@@ -76,34 +72,36 @@ public class ProfileImgService {
                 profileImg = existingProfileImgOpt.get();
                 profileImg.setUpdated_at(LocalDateTime.now());
             } else {
-                // If no profile image is found, create a new one
                 profileImg = new ProfileImg();
                 profileImg.setUser_id(userId);
                 profileImg.setCreated_at(LocalDateTime.now());
                 profileImg.setUpdated_at(LocalDateTime.now());
             }
 
-            // Set common fields
             profileImg.setFile_name(fileName);
             profileImg.setFile_type(fileType);
             profileImg.setFile_size(String.valueOf(fileSize));
-            profileImg.setGrp_data(file.getBytes()); // Update binary data
+            profileImg.setGrp_data(file.getBytes()); 
 
-            profileImgRepository.save(profileImg);
+           ProfileImg profile = profileImgRepository.save(profileImg);
 
-            return profileImg;
+           System.err.println(profile.getId());
+            return profile.getId();
 
         } catch (IOException ex) {
             throw new RuntimeException("Could not update or create the file " + fileName + ". Please try again!", ex);
         }
     }
 
-    public void deleteProfileImg(String imgId) {
-        Optional<ProfileImg> profileImgOpt = profileImgRepository.findById(imgId);
+    public void deleteProfileImg(String userId) {
+        Optional<ProfileImg> profileImgOpt = profileImgRepository.findByUserId(userId);
         if (profileImgOpt.isPresent()) {
-            profileImgRepository.deleteById(imgId);
+            ProfileImg profileImg = profileImgOpt.get(); 
+            String id = profileImg.getId();  
+            profileImgRepository.deleteById(id); 
         } else {
-            throw new RuntimeException("Profile image not found with id " + imgId);
+            throw new RuntimeException("Profile image not found with user id " + userId);
         }
     }
+
 }
