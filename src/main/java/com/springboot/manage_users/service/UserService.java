@@ -3,6 +3,7 @@ package com.springboot.manage_users.service;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -358,4 +359,32 @@ public class UserService {
             })
             .collect(Collectors.toList());
     }
+    
+    public List<ProjectUserDto> getAllProjectUsersFilled(List<String> userIds) {
+    	System.out.println("UserIds: " + userIds);
+
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();  
+        }
+
+        List<Users> userList = usersRepository.findAllById(userIds);
+        System.out.println("User List: " + userList);
+
+        return userList.stream()
+            .map(user -> {
+                Optional<ProfileImg> profileImgOpt = profileImgService.getProfileImg(user.getUserid());
+                byte[] file = profileImgOpt.map(ProfileImg::getGrp_data).orElse(null);
+
+                return new ProjectUserDto(
+                    user.getUserid(),
+                    user.getFirst_name(),
+                    user.getLast_name(),
+                    user.getRole(),
+                    user.getStatus(),
+                    file
+                );
+            })
+            .collect(Collectors.toList());
+    }
+
 }

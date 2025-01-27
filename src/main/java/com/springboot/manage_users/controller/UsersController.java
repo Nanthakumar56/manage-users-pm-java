@@ -159,6 +159,19 @@ public class UsersController {
 	    }
 	}
 
+	@GetMapping("/getProjectUsersFilled")
+	public ResponseEntity<?> getAllProjectUsersFilled(
+	    @RequestBody
+	    List<String> userIds  // The userIds list will now be required
+	) {
+	    List<ProjectUserDto> userList = userService.getAllProjectUsersFilled(userIds);
+	    if (!userList.isEmpty()) {
+	        return ResponseEntity.status(HttpStatus.OK).body(userList);
+	    } else {
+	        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No users found for the provided user IDs");
+	    }
+	}
+
 
 	@GetMapping("/getUser")
 	public ResponseEntity<UserInformationDto> getUserById(@RequestParam("userId") String userId) {

@@ -22,7 +22,6 @@ public interface UsersRepository extends JpaRepository<Users, String>{
 	@Query("SELECT new map(u.userid as userid, u.first_name as first_name, u.last_name as last_name, " +
 	       "u.role as role, u.email as email, u.created_at as created_at, u.status as status) " +
 	       "FROM Users u")
-	List<Users> findAllUserFields();
-	
+	List<Users> findAllUserFields();	
 
 }
