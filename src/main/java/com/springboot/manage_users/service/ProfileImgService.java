@@ -68,7 +68,6 @@ public class ProfileImgService {
             ProfileImg profileImg;
 
             if (existingProfileImgOpt.isPresent()) {
-                // If profile image exists, update it
                 profileImg = existingProfileImgOpt.get();
                 profileImg.setUpdated_at(LocalDateTime.now());
             } else {

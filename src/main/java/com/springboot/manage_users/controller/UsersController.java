@@ -158,11 +158,26 @@ public class UsersController {
 	        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No users found for the provided search term or criteria");
 	    }
 	}
+	
+	@GetMapping("/getTaskUsers")
+	public ResponseEntity<?> getAllTaskUsers(
+	    @RequestParam(required = false) String searchTerm,
+	    @RequestParam List<String> userIds 
+	) {
+	    List<ProjectUserDto> userList = userService.getTaskUsersWithinIds(searchTerm, userIds);
 
-	@GetMapping("/getProjectUsersFilled")
+	    if (!userList.isEmpty()) {
+	        return ResponseEntity.ok(userList);
+	    } else {
+	        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No users found for the provided criteria.");
+	    }
+	}
+
+
+	@PostMapping("/getProjectUsersFilled")
 	public ResponseEntity<?> getAllProjectUsersFilled(
 	    @RequestBody
-	    List<String> userIds  // The userIds list will now be required
+	    List<String> userIds 
 	) {
 	    List<ProjectUserDto> userList = userService.getAllProjectUsersFilled(userIds);
 	    if (!userList.isEmpty()) {

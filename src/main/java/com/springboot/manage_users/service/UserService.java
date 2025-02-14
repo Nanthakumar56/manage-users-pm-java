@@ -332,12 +332,11 @@ public class UserService {
 
         return userList.stream()
             .filter(user -> {
-                // Exclude users present in userIds
                 if (userIds != null && userIds.contains(user.getUserid())) {
                     return false;
                 }
 
-                // Filter based on searchTerm if provided
+
                 if (searchTerm == null || searchTerm.trim().isEmpty()) {
                     return true;
                 }
@@ -359,6 +358,39 @@ public class UserService {
             })
             .collect(Collectors.toList());
     }
+    
+    public List<ProjectUserDto> getTaskUsersWithinIds(String searchTerm, List<String> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList(); // Return empty if no user IDs are provided
+        }
+
+        // Fetch only users whose IDs are in the provided list
+        List<Users> userList = usersRepository.findByUseridIn(userIds);
+
+        return userList.stream()
+            .filter(user -> {
+                if (searchTerm == null || searchTerm.trim().isEmpty()) {
+                    return true; // No search term, return all users within the given userIds
+                }
+                String fullName = user.getFirst_name() + " " + user.getLast_name();
+                return fullName.toLowerCase().contains(searchTerm.toLowerCase());
+            })
+            .map(user -> {
+                Optional<ProfileImg> profileImgOpt = profileImgService.getProfileImg(user.getUserid());
+                byte[] file = profileImgOpt.map(ProfileImg::getGrp_data).orElse(null);
+
+                return new ProjectUserDto(
+                    user.getUserid(),
+                    user.getFirst_name(),
+                    user.getLast_name(),
+                    user.getRole(),
+                    user.getStatus(),
+                    file
+                );
+            })
+            .collect(Collectors.toList());
+    }
+
     
     public List<ProjectUserDto> getAllProjectUsersFilled(List<String> userIds) {
     	System.out.println("UserIds: " + userIds);
