@@ -234,66 +234,66 @@ public class UsersController {
 	@PutMapping("/update")
 	public ResponseEntity<?> updateUser(
 	        @RequestParam("userid") String userId,
-	        @RequestParam("first_name") String firstName,
-	        @RequestParam("last_name") String lastName,
-	        @RequestParam("email") String email,
-	        @RequestParam("phone") String phone,
-	        @RequestParam("employee_id") String employeeId,
-	        @RequestParam("role") String role,
-	        @RequestParam("organization_unit") String orgUnit,
-	        @RequestParam("department") String department,
-	        @RequestParam("designation") String designation,
-	        @RequestParam("remove") boolean remove,
+	        @RequestParam(value = "first_name", required = false) String firstName,
+	        @RequestParam(value = "last_name", required = false) String lastName,
+	        @RequestParam(value = "email", required = false) String email,
+	        @RequestParam(value = "phone", required = false) String phone,
+	        @RequestParam(value = "employee_id", required = false) String employeeId,
+	        @RequestParam(value = "role", required = false) String role,
+	        @RequestParam(value = "organization_unit", required = false) String orgUnit,
+	        @RequestParam(value = "department", required = false) String department,
+	        @RequestParam(value = "designation", required = false) String designation,
+	        @RequestParam(value = "remove", defaultValue = "false") boolean remove,
 	        @RequestParam(value = "file", required = false) MultipartFile file
 	) {
-	    Optional<Users> existingUserOpt = userService.getUserById(userId);
+	    try {
+	        // **Create a new Users object to update**
+	        Users updatedUser = new Users();
+	        updatedUser.setUserid(userId);
+	        updatedUser.setFirst_name(firstName);
+	        updatedUser.setLast_name(lastName);
+	        updatedUser.setEmail(email);
+	        updatedUser.setPhone(phone);
+	        updatedUser.setEmployee_id(employeeId);
+	        updatedUser.setRole(role);
+	        updatedUser.setOrganization_unit(orgUnit);
+	        updatedUser.setDepartment(department);
+	        updatedUser.setDesignation(designation);
 
-	    if (existingUserOpt.isPresent()) {
-	        Users user = existingUserOpt.get();
-	        user.setFirst_name(firstName);
-	        user.setLast_name(lastName);
-	        user.setEmail(email);
-	        user.setPhone(phone);
-	        user.setRole(role);
-	        user.setEmployee_id(employeeId);
-	        user.setDepartment(department);
-	        user.setDesignation(designation);
-	        user.setOrganization_unit(orgUnit);
+	        boolean updateStatus = userService.updateUser(userId, updatedUser);
 
-	        System.err.println("Remove : "+ remove);
-	        
-	        boolean updateStatus = userService.updateUser(user);
+	        if (!updateStatus) {
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to update user");
+	        }
 
-	        if (updateStatus) {
-	        	
-	        	if(remove)
-	        	{
-	        		profileImgService.deleteProfileImg(userId);
-	        	}
-	        	
-	            if (file != null && !file.isEmpty()) {
-	                try {
-	                    String profileImgId = profileImgService.updateProfileImg(file, userId);
-	                    Optional<Users> userToUpdate = userService.getUserById(user.getUserid());
-	                    if (userToUpdate.isPresent()) {
-	                        Users existingUser = userToUpdate.get();
-	                        existingUser.setProfile(profileImgId);
-	                        userRepo.save(existingUser);
-	                    }
-	                	} catch (Exception e) {
-	                		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                            .body("User updated, but failed to upload profile image: " + e.getMessage());
-	                	}
-	            	}
-	            	return ResponseEntity.status(HttpStatus.OK).body("User updated successfully");
-	        	} else {
-	        		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to update user");
-	        	}
-	    	} else {
-	    		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-	    	}
+	        // **Handle profile image removal**
+	        if (remove) {
+	            profileImgService.deleteProfileImg(userId);
+	        }
+
+	        // **Handle profile image upload**
+	        if (file != null && !file.isEmpty()) {
+	            try {
+	                String profileImgId = profileImgService.updateProfileImg(file, userId);
+	                Optional<Users> userToUpdate = userService.getUserById(userId);
+	                if (userToUpdate.isPresent()) {
+	                    Users existingUser = userToUpdate.get();
+	                    existingUser.setProfile(profileImgId);
+	                    userRepo.save(existingUser);
+	                }
+	            } catch (Exception e) {
+	                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                        .body("User updated, but failed to upload profile image: " + e.getMessage());
+	            }
+	        }
+
+	        return ResponseEntity.status(HttpStatus.OK).body("User updated successfully");
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
+	    }
 	}
-	
+
 	@PutMapping("/updateCredentials")
 	public ResponseEntity<?> updateCredential(@RequestBody Users data)
 	{
@@ -321,6 +321,7 @@ public class UsersController {
 		}
 		
 	}
+	
 	@PostMapping("/changePassword")
 	public ResponseEntity<?> sendPasswordMail(@RequestBody Map<String, String> changeData) {
 	    try {
@@ -328,7 +329,8 @@ public class UsersController {
 	        String email = changeData.get("email");
 	        String url = changeData.get("url");
 
-	        if (name == null || email == null || url == null) {
+	        if (name == null || name.isEmpty() || email == null || email.isEmpty() || 
+	            url == null || url.isEmpty()) {
 	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing required fields");
 	        }
 
@@ -338,6 +340,7 @@ public class UsersController {
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to send password reset mail");
 	    }
 	}
+
 
 	@GetMapping("/getName")
 	public ResponseEntity<?> getName(@RequestParam String userId) {

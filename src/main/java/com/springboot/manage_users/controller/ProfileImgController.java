@@ -22,18 +22,6 @@ public class ProfileImgController {
     @Autowired
     private ProfileImgService profileImgService;
 
-//    @PostMapping("/upload")
-//    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file, 
-//                                                           @RequestParam("user_id") String userId) {
-//        String response = profileImgService.uploadProfileImg(file, userId);
-//        	
-//         System.err.println(response);
-//        
-//        return ResponseEntity.ok(response);
-//    }
-
-
-
     @GetMapping("/{id}")
     public ResponseEntity<byte[]> getProfileImg(
             @PathVariable String id,

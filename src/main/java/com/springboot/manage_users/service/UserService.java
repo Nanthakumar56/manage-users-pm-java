@@ -1,23 +1,21 @@
 package com.springboot.manage_users.service;
 
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import com.springboot.manage_users.dto.BulkUserCreationResponse;
 import com.springboot.manage_users.dto.BulkUserCreationResponse.FailedUser;
@@ -43,6 +41,11 @@ public class UserService {
 
     @Value("${spring.mail.username}")
     private String fromEmail;
+    
+    @Autowired
+    private RestTemplate restTemplate;
+
+    
 
     @PostConstruct
     public void init() {
@@ -67,7 +70,9 @@ public class UserService {
 
             if(sendmail) {
                 sendMailAsync(users.getEmail(), users.getUsername(), users.getPassword(), users.getFirst_name());
-            }
+            }           
+
+            updateRoleUsers(users.getRole());
 
             return "Success";
         } catch (Exception e) {
@@ -87,6 +92,8 @@ public class UserService {
                 user.setStatus("Active");
 
                 usersRepository.save(user);
+
+                updateRoleUsers(user.getRole());
 
                 sendMailAsync(user.getEmail(), user.getUsername(), user.getPassword(), user.getFirst_name());
 
@@ -129,7 +136,7 @@ public class UserService {
 
         return String.format("%s%05d", userIdPrefix, nextId);
     }
-
+    
     @Async("taskExecutor")
     public void sendMailAsync(String email, String username, String password, String name) {
         CompletableFuture.runAsync(() -> {
@@ -203,25 +210,41 @@ public class UserService {
         }
     }
 
-    public boolean updateUser(Users users) {
+    public boolean updateUser(String userId, Users updatedUser) {
         try {
-            Optional<Users> existingUserOpt = usersRepository.findById(users.getUserid());
+            Optional<Users> existingUserOpt = usersRepository.findById(userId);
             if (existingUserOpt.isPresent()) {
                 Users existingUser = existingUserOpt.get();
+                String oldRole = existingUser.getRole();
+                String newRole = updatedUser.getRole();
 
-                Field[] fields = users.getClass().getDeclaredFields();
-                for (Field field : fields) {
-                    field.setAccessible(true);
-                    Object value = field.get(users);
-                    if (value != null) {
-                        field.set(existingUser, value);
-                    }
+                if (updatedUser.getFirst_name() != null) existingUser.setFirst_name(updatedUser.getFirst_name());
+                if (updatedUser.getLast_name() != null) existingUser.setLast_name(updatedUser.getLast_name());
+                if (updatedUser.getEmail() != null) existingUser.setEmail(updatedUser.getEmail());
+                if (updatedUser.getPhone() != null) existingUser.setPhone(updatedUser.getPhone());
+                if (updatedUser.getEmployee_id() != null) existingUser.setEmployee_id(updatedUser.getEmployee_id());
+                if (updatedUser.getDepartment() != null) existingUser.setDepartment(updatedUser.getDepartment());
+                if (updatedUser.getDesignation() != null) existingUser.setDesignation(updatedUser.getDesignation());
+                if (updatedUser.getOrganization_unit() != null) existingUser.setOrganization_unit(updatedUser.getOrganization_unit());
+
+                if (newRole != null && !newRole.equals(oldRole)) {
+                    existingUser.setRole(newRole);
                 }
 
                 existingUser.setUpdated_at(LocalDateTime.now());
                 usersRepository.save(existingUser);
+
+
+                if (newRole != null && !newRole.equals(oldRole)) {
+                    updateRoleUsersRemove(oldRole);
+                    updateRoleUsers(newRole);
+                } else {
+                    System.err.println("No Role Change Detected.");
+                }
+
                 return true;
             } else {
+                System.err.println("User not found.");
                 return false;
             }
         } catch (Exception e) {
@@ -229,6 +252,8 @@ public class UserService {
             return false;
         }
     }
+
+
 
     public String formatErrorMessage(String errorMessage) {
         String detail = "Unknown error";
@@ -328,7 +353,7 @@ public class UserService {
     }
     
     public List<ProjectUserDto> getAllProjectUsers(String searchTerm, List<String> userIds) {
-        List<Users> userList = usersRepository.findAll();
+    	List<Users> userList = usersRepository.findByStatus("Active");
 
         return userList.stream()
             .filter(user -> {
@@ -418,5 +443,30 @@ public class UserService {
             })
             .collect(Collectors.toList());
     }
-
+    
+    public void updateRoleUsers(String roleName) {
+      
+            String url = "http://localhost:5757/roles/updateRoleUsers?rolename=" + roleName;
+            
+            try {
+            	restTemplate.put(url, null);
+            
+                System.out.println("Failed to update role users");
+        } catch (Exception e) {
+            System.out.println("Error updating role users: " + e.getMessage());
+        }
+    }
+    
+    public void updateRoleUsersRemove(String roleName) {
+        	
+            String url = "http://localhost:5757/roles/updateRoleUsersRemove?rolename=" + roleName;
+            
+            try {
+            	restTemplate.put(url, null);
+            
+                System.out.println("Failed to update role users");
+        } catch (Exception e) {
+            System.out.println("Error updating role users: " + e.getMessage());
+        }
+    }
 }

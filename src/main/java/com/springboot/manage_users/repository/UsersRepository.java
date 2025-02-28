@@ -24,6 +24,8 @@ public interface UsersRepository extends JpaRepository<Users, String>{
 	       "FROM Users u")
 	List<Users> findAllUserFields();
 
-	List<Users> findByUseridIn(List<String> userIds);	
+	List<Users> findByUseridIn(List<String> userIds);
+
+	List<Users> findByStatus(String string);	
 
 }
